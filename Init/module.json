@@ -1,0 +1,49 @@
+{
+  "Okay": "4.5.3",
+  "version": "1.0.0",
+  "moduleName": "Ukrposhta",
+  "vendor": {
+    "email": "devsviat@proton.me",
+    "site": "https://github.com/devSviat"
+  },
+  "modifications": {
+    "front": [
+      {
+        "file": "order.tpl",
+        "changes": [
+          {
+            "find": "{if $delivery}",
+            "append": "order_delivery.tpl"
+          }
+        ]
+      }
+    ],
+    "backend": [
+      {
+        "file": "orders.tpl",
+        "changes": [
+          {
+            "find": "{if $labels}",
+            "appendBefore": "orders_status_filter.tpl"
+          },
+          {
+            "find": "<form class=\"search\" method=\"get\">",
+            "prepend": "orders_search.tpl"
+          },
+          {
+            "find": "<div class=\"input-group input-group--search\">",
+            "appendAfter": "orders_search_hint.tpl"
+          },
+          {
+            "find": "<option data-item=\"remove\" value=\"delete\">",
+            "appendBefore": "orders_action_option.tpl"
+          },
+          {
+            "find": "{* Visited info *}",
+            "appendBefore": "mass_result.tpl"
+          }
+        ]
+      }
+    ]
+  }
+}

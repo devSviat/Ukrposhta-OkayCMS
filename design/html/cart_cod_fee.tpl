@@ -1,0 +1,1 @@
+{* Один рядок, без завершального перенесення: тема показує блок опису, щойно цей блок щось виводить. Скрипт кошика заповнює й показує рядок. *}{if $payment_method->sviat__ukrposhta__cod|default:0 == 1}<span class="up-cod-line up-cod-line--described" data-up-cod-payment="{$payment_method->id|escape}" hidden></span>{/if}

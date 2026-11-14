@@ -1,0 +1,136 @@
+/* Лише розкладка: поля й чіпи беруть класи теми; кольори дає тема (змінні або, якщо тема
+   змінних не має, скрипт зчитує їх із власної кнопки теми). */
+.up-cart {
+    --up-accent: var(--okay-basic-company, var(--vs-accent, #00afee));
+    --up-border: var(--okay-border-color, var(--vs-border, #dbdbdb));
+    --up-text: var(--okay-body-text, var(--vs-ink, #222));
+    --up-surface: var(--okay-boxed-color, #fff);
+    --up-warning: #a35a00;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 0;
+    font-size: 14px;
+    font-style: normal;
+    color: var(--up-text);
+}
+.up-cart [hidden] { display: none !important; }
+.up-cart__city { position: relative; margin: 0; }
+.up-cart__suggest {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    z-index: 20;
+    margin: 2px 0 0;
+    padding: 4px 0;
+    list-style: none;
+    background: var(--up-surface);
+    border: 1px solid var(--up-border, #dbdbdb);
+    border-radius: 4px;
+    box-shadow: var(--okay-shadow-color, 0 2px 5px rgba(0, 0, 0, .2));
+    max-height: 320px;
+    overflow-y: auto;
+}
+.up-cart__suggest-item { padding: 8px 12px; cursor: pointer; line-height: 1.35; }
+.up-cart__suggest-item[aria-selected="true"], .up-cart__suggest-item:hover { background: rgba(0, 0, 0, .05); }
+.up-cart__suggest-region { display: block; font-size: 12px; opacity: .75; }
+.up-cart__suggest-type, .up-cart__city-line-type { font-weight: 400; opacity: .75; }
+.up-cart__suggest-empty { padding: 8px 12px; opacity: .75; }
+.up-cart__points { display: flex; flex-direction: column; gap: 10px; }
+.up-cart__search { margin: 0; }
+.up-cart__list {
+    display: flex;
+    flex-direction: column;
+    max-height: 340px;
+    overflow-y: auto;
+    border: 1px solid var(--up-border, #dbdbdb);
+    border-radius: 4px;
+    background: var(--up-surface);
+}
+.up-cart__option {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 100%;
+    padding: 10px 12px;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--up-border, #dbdbdb);
+    cursor: pointer;
+}
+.up-cart__option:last-child { border-bottom: 0; }
+.up-cart__option:hover { background: rgba(0, 0, 0, .03); }
+.up-cart__option--selected { box-shadow: inset 3px 0 0 var(--up-accent, #00afee); background: rgba(0, 0, 0, .04); }
+.up-cart__option--unfit { cursor: not-allowed; opacity: .6; }
+.up-cart__option-head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.up-cart__option-kind { font-size: 12px; opacity: .75; white-space: nowrap; }
+.up-cart__option-place { font-size: 13px; }
+.up-cart__option-note { font-size: 12px; opacity: .8; }
+.up-cart__option--unfit .up-cart__option-note { color: var(--up-warning); opacity: 1; }
+.up-cart__count { margin-left: .4em; opacity: .7; }
+.up-cart__more, .up-cart__empty, .up-cart__message { margin: 0; font-size: 13px; }
+.up-cart__empty { padding: 10px 12px; }
+.up-cart__quote { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 8px 12px; font-size: 13px; line-height: 1.5; background: rgba(0, 0, 0, .03); border-radius: 4px; }
+.up-cart__quote--problem { background: #fbf2e5; border: 1px solid #e2c08e; }
+.up-cart__quote p { margin: 0; }
+.up-cart--loading .up-cart__list { opacity: .5; }
+
+/* Теми на основі okay_shop не мають компонента чіпа. */
+.up-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.up-chip {
+    min-height: 34px;
+    padding: 0 14px;
+    font: inherit;
+    font-size: 14px;
+    color: var(--up-text);
+    background: var(--up-surface);
+    border: 1px solid var(--up-border, #dbdbdb);
+    border-radius: var(--up-radius, 17px);
+    cursor: pointer;
+}
+.up-chip:hover { border-color: var(--up-accent, #00afee); }
+.up-chip--selected {
+    color: var(--up-accent-text, var(--okay-basic-company-text, #fff));
+    background: var(--up-accent, #00afee);
+    border-color: var(--up-accent, #00afee);
+}
+.up-chip--selected .up-cart__count { opacity: .85; }
+
+/* Тема сама задає внутрішні відступи блоку; проміжок потрібен лише під описом доставки над блоком. */
+* + .fn_delivery_module_html .up-cart { margin-top: 10px; }
+
+.up-cart__city-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+.up-cart__city-line-label, .up-cart__city-line-area { font-size: 13px; opacity: .7; }
+.up-cart__link {
+    padding: 0;
+    font: inherit;
+    font-weight: 600;
+    color: var(--up-accent, #00afee);
+    text-decoration: underline;
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+.up-cart__chosen { display: flex; align-items: flex-start; gap: 12px; line-height: 1.5; }
+.up-cart__chosen-text { display: flex; flex: 1 1 auto; flex-direction: column; gap: 2px; min-width: 0; }
+.up-cart__chosen-city { font-size: 12px; opacity: .7; }
+.up-cart__chosen .up-cart__change { flex: none; }
+.up-cart__schedule, .up-cart__chosen-schedule { font-size: 11px; line-height: 1.35; opacity: .75; }
+.up-cart__chosen-schedule .up-cart__schedule { opacity: 1; }
+.up-cart__day { white-space: nowrap; }
+/* Вужчі бічні поля дають кільком вкладкам груп вміститися в рядок на телефоні 390 px; довші назви переносяться. */
+.up-cart__groups > * { padding-left: 10px; padding-right: 10px; white-space: nowrap; }
+
+/* Усередині label оплати теми (поза .up-cart): змінні кольорів модуля там не задані. */
+.up-cod-line { display: block; margin-top: 2px; font-size: 11px; font-style: normal; font-weight: 400; line-height: 1.35; color: #a35a00; }
+.up-cod-line--described { margin-top: 6px; font-size: inherit; }
+.up-cod-line[hidden] { display: none; }
+
+/* Видимий для jQuery Validate (він пропускає :hidden), але не для людей: до нього чіпляється повідомлення
+   "виберіть відділення". */
+.up-cart__points { position: relative; }
+.up-cart__point-check { position: absolute; width: 1px; height: 1px; padding: 0; margin: 0; border: 0; opacity: 0; pointer-events: none; }
