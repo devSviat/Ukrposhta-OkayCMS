@@ -136,7 +136,8 @@ class FrontExtender implements ExtensionInterface
         }
         $result = $this->validator->validate($order, $_POST, $this->uahTotal->metrics($this->cart->get()));
         if (is_string($result)) {
-            return $this->translations->getTranslation($result);
+            // Порожня помилка означала б, що перевірку пройдено, тож без перекладу лишається ключ.
+            return $this->translations->getTranslation($result) ?: $result;
         }
         $this->selection = $result;
 
