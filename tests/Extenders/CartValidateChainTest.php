@@ -37,6 +37,12 @@ class CartValidateChainTest extends TestCase
         self::assertSame('sviat__ukrposhta__err_city', $this->front()->getCartValidateError(null, $this->order()));
     }
 
+    /** Порожня помилка означає, що перевірку пройдено: тема без перекладу однаково не пропускає замовлення без пункту. */
+    public function testMissingTranslationStillRefuses(): void
+    {
+        self::assertSame('sviat__ukrposhta__err_city', $this->front(translated: false)->getCartValidateError(null, $this->order()));
+    }
+
     public function testControlEarlierErrorIsKept(): void
     {
         self::assertSame('empty_phone', $this->front()->getCartValidateError('empty_phone', $this->order()));
@@ -52,7 +58,7 @@ class CartValidateChainTest extends TestCase
         return new \ReflectionClass($class)->newInstanceWithoutConstructor();
     }
 
-    private function front(): FrontExtender
+    private function front(bool $translated = true): FrontExtender
     {
         $deliveries = $this->createStub(DeliveriesEntity::class);
         $deliveries->method('get')->willReturn((object)['id' => self::OWN_DELIVERY, 'module_id' => self::MODULE, 'settings' => '']);
@@ -69,7 +75,11 @@ class CartValidateChainTest extends TestCase
         $module = $this->createStub(Module::class);
         $module->method('getModuleIdByNamespace')->willReturn(self::MODULE);
         $translations = $this->createStub(FrontTranslations::class);
-        $translations->method('getTranslation')->willReturnArgument(0);
+        if ($translated) {
+            $translations->method('getTranslation')->willReturnArgument(0);
+        } else {
+            $translations->method('getTranslation')->willReturn(null);
+        }
 
         $dictionary = self::blank(DictionaryReady::class);
         new \ReflectionProperty(DictionaryReady::class, 'ready')->setValue($dictionary, true);
