@@ -36,16 +36,18 @@ final class ShipmentView
             $this->auth->items(),
             time(),
             $this->labels->defaultSize(),
+            $this->lines->forOrder($order)['point'] ?? null,
         );
     }
 
     /**
      * @param \Closure(): (ShipmentDraft|string) $draft чернетка потрібна лише формі, а будується з товарів замовлення
      * @param list<array{api: string, reason: string}> $auth AuthFlags::items()
+     * @param ?string $point пункт видачі зі знімка замовлення, рядком з індексу й назви
      */
-    public static function build(int $orderId, ?object $row, bool $own, \Closure $draft, array $auth, int $now, string $labelSize = Labels::SIZE_10X10): ?array
+    public static function build(int $orderId, ?object $row, bool $own, \Closure $draft, array $auth, int $now, string $labelSize = Labels::SIZE_10X10, ?string $point = null): ?array
     {
-        $view = self::state($orderId, $row, $own, $draft, $now);
+        $view = self::state($orderId, $row, $own, $draft, $now, $point);
         if ($view === null) {
             return null;
         }
@@ -55,7 +57,7 @@ final class ShipmentView
     }
 
     /** @param \Closure(): (ShipmentDraft|string) $draft */
-    private static function state(int $orderId, ?object $row, bool $own, \Closure $draft, int $now): ?array
+    private static function state(int $orderId, ?object $row, bool $own, \Closure $draft, int $now, ?string $point): ?array
     {
         // Після зміни способу доставки відправлення старого пункту лишається видимим: його треба видалити чи відв'язати.
         if ($row === null && !$own) {
@@ -80,7 +82,7 @@ final class ShipmentView
         if ($row !== null) {
             $actions = ['label', 'refresh', ...(ShipmentService::deletable($row) ? ['remove'] : []), 'unlink'];
 
-            return ['mode' => 'card', 'card' => ShipmentCard::fromRow($row), 'actions' => $actions] + $view;
+            return ['mode' => 'card', 'card' => ShipmentCard::fromRow($row, $point), 'actions' => $actions] + $view;
         }
 
         $built = $draft();

@@ -219,6 +219,9 @@
         clearIssues(root);
         busy(button, true);
         var tab = window.open('', '_blank');
+        if (tab) {
+            tab.opener = null;
+        }
         var closeTab = function () {
             if (tab && !tab.closed) {
                 tab.close();
@@ -363,6 +366,19 @@
         }
         link.classList.add('is-copied');
         setTimeout(function () { link.classList.remove('is-copied'); }, 1000);
+    });
+
+    document.addEventListener('click', function (event) {
+        var toggle = event.target.closest('.fn_up_ship_more');
+        var card = toggle ? toggle.closest('.up-card') : null;
+        var panel = card ? card.querySelector('.up-card__more') : null;
+        if (!panel) {
+            return;
+        }
+        var opening = panel.hidden;
+        panel.hidden = !opening;
+        toggle.setAttribute('aria-expanded', opening ? 'true' : 'false');
+        toggle.querySelector('span').textContent = toggle.getAttribute(opening ? 'data-less' : 'data-more');
     });
 
     document.addEventListener('click', function (event) {

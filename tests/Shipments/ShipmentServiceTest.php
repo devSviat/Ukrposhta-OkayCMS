@@ -22,6 +22,7 @@ use Okay\Modules\Sviat\Ukrposhta\Shipments\PendingShipment;
 use Okay\Modules\Sviat\Ukrposhta\Shipments\PersonName;
 use Okay\Modules\Sviat\Ukrposhta\Shipments\RecipientParty;
 use Okay\Modules\Sviat\Ukrposhta\Shipments\SenderClient;
+use Okay\Modules\Sviat\Ukrposhta\Shipments\ShipmentDetails;
 use Okay\Modules\Sviat\Ukrposhta\Shipments\ShipmentDraft;
 use Okay\Modules\Sviat\Ukrposhta\Shipments\ShipmentOutcome;
 use Okay\Modules\Sviat\Ukrposhta\Shipments\ShipmentService;
@@ -117,13 +118,19 @@ class ShipmentServiceTest extends TestCase
     public function testCreateStoresShipment(): void
     {
         $this->partiesAnswer();
-        $this->transport->json(200, self::shipment());
+        $this->transport->json(200, self::shipment(['deliveryDate' => '2030-03-20T00:00:00', 'description' => 'Не з відповіді']));
 
         $outcome = $this->service()->create(self::ORDER, self::draft());
 
         self::assertTrue($outcome->ok);
         self::assertSame(self::BARCODE, $outcome->barcode);
         $row = $this->rows->forOrder(self::ORDER);
+        $details = ShipmentDetails::decode($row->details);
+        self::assertSame('Одяг', $details['description'], 'what was sent, not what came back');
+        self::assertSame('Шевченко', $details['last_name']);
+        self::assertSame('23222', $details['postcode']);
+        self::assertSame(1500, $details['weight_g']);
+        self::assertSame('2030-03-20', $details['delivery_date']);
         self::assertSame(PendingShipment::CREATED, $row->state);
         self::assertSame('shipment-uuid-1', $row->uuid);
         self::assertSame('CREATED', $row->status);
@@ -319,7 +326,7 @@ class ShipmentServiceTest extends TestCase
         $this->uncertainOrder();
         $this->transport->json(200, [
             self::shipment(['uuid' => 'other-uuid', 'barcode' => '0500000000025', 'externalId' => '76']),
-            self::shipment(),
+            self::shipment(['type' => 'STANDARD']),
         ]);
 
         $outcome = $this->service()->lookup(self::ORDER);
@@ -330,6 +337,7 @@ class ShipmentServiceTest extends TestCase
         $row = $this->rows->forOrder(self::ORDER);
         self::assertSame(PendingShipment::CREATED, $row->state);
         self::assertSame('shipment-uuid-1', $row->uuid);
+        self::assertSame(['type' => 'STANDARD'], ShipmentDetails::decode($row->details));
     }
 
     /** Повтор після обриву міг дати два відправлення з тим самим externalId: потрібне останнє створене. */
@@ -404,11 +412,15 @@ class ShipmentServiceTest extends TestCase
     public function testAttachStoresOwnShipment(): void
     {
         $this->cachedSender();
-        $this->transport->json(200, self::shipment());
+        $this->transport->json(200, self::shipment(['description' => 'Книги', 'recipient' => ['lastName' => 'Франко', 'firstName' => 'Іван', 'phoneNumber' => '380501112233']]));
 
         $outcome = $this->service()->attach(self::ORDER, ' 05000 0000 0017 ');
 
         self::assertTrue($outcome->ok);
+        self::assertSame(
+            ['description' => 'Книги', 'last_name' => 'Франко', 'first_name' => 'Іван', 'phone' => '380501112233'],
+            ShipmentDetails::decode($this->rows->forOrder(self::ORDER)->details),
+        );
         self::assertSame('GET shipments/barcode/' . self::BARCODE, $this->calls()[2]);
         self::assertSame('shipment-uuid-1', $this->rows->forOrder(self::ORDER)->uuid);
         self::assertSame(PendingShipment::CREATED, $this->rows->forOrder(self::ORDER)->state);

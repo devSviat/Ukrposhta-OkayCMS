@@ -93,6 +93,8 @@ final class ShipmentService
 
             return ShipmentOutcome::refused('sviat__ukrposhta__ship_err_uncertain');
         }
+        // Що надіслали, а не що повернули: відповідь створення повного відправлення не обіцяє.
+        $shipment['details'] = ShipmentDetails::encode(ShipmentDetails::fromDraft($draft, $answer));
         if ($this->rows->complete($orderId, $shipment)) {
             return new ShipmentOutcome(true, $shipment['barcode']);
         }
@@ -339,7 +341,7 @@ final class ShipmentService
      * Відправлення з відповіді Укрпошти; null, коли в ній немає uuid чи штрихкоду.
      *
      * @param array<mixed> $item
-     * @return ?array{uuid: string, barcode: string, status: ?string, delivery_price: ?float, cod_amount: ?float, cod_fee: ?float, paid_by_recipient: ?bool}
+     * @return ?array{uuid: string, barcode: string, status: ?string, delivery_price: ?float, cod_amount: ?float, cod_fee: ?float, paid_by_recipient: ?bool, details: ?string}
      */
     private static function shipment(array $item, ?float $codAmount, ?bool $paidByRecipient = null): ?array
     {
@@ -359,6 +361,7 @@ final class ShipmentService
             'cod_fee' => self::money($item['postPayDeliveryPrice'] ?? null),
             // Хто платить за доставку, видно з відповіді Укрпошти; інакше з чернетки замовлення.
             'paid_by_recipient' => is_bool($item['paidByRecipient'] ?? null) ? $item['paidByRecipient'] : $paidByRecipient,
+            'details' => ShipmentDetails::encode(ShipmentDetails::fromApi($item)),
         ];
     }
 

@@ -20,7 +20,9 @@ use Okay\Modules\Sviat\Ukrposhta\Api\Credentials;
 use Okay\Modules\Sviat\Ukrposhta\Api\EcomClient;
 use Okay\Modules\Sviat\Ukrposhta\Api\Http\HttpResponse;
 use Okay\Modules\Sviat\Ukrposhta\Api\TrackingClient;
+use Okay\Modules\Sviat\Ukrposhta\Shipments\ShipmentHistory;
 use Okay\Modules\Sviat\Ukrposhta\Shipments\ShipmentStatus;
+use Okay\Modules\Sviat\Ukrposhta\Shipments\TrackingEvent;
 use Okay\Modules\Sviat\Ukrposhta\Shipments\ShipmentTracking;
 use PHPUnit\Framework\TestCase;
 
@@ -254,6 +256,79 @@ class ShipmentTrackingTest extends TestCase
         self::assertSame(10, $row->event_reason);
         self::assertSame('returned', $row->status_group, 'the full history decides the group');
         self::assertObjectNotHasProperty('history_json', $row, 'nothing reads a stored history');
+    }
+
+    /** Кнопка вже отримує всю історію одним запитом: картка показує її, а не лише останню подію. */
+    public function testRefreshKeepsTheNewestFiftyEventsWithPlaces(): void
+    {
+        $this->shipment(7, $this->barcode(7));
+        $events = [];
+        for ($i = 0; $i < 60; $i++) {
+            $events[] = ['step' => $i, 'event' => 20700, 'eventName' => 'У дорозі ' . $i, 'name' => 'Київ', 'index' => '01001', 'date' => date('Y-m-d\TH:i:s', strtotime('2026-11-01 00:00:00') + $i * 60)];
+        }
+        $this->transport->json(200, $events);
+
+        self::assertTrue($this->tracking()->refresh(7)->ok);
+
+        $history = ShipmentHistory::decode($this->rows->forOrder(7)->history);
+        self::assertCount(ShipmentHistory::MAX_EVENTS, $history);
+        self::assertSame('У дорозі 10', $history[0]['name']);
+        self::assertSame('У дорозі 59', $history[49]['name']);
+        self::assertSame('01001 Київ', $history[49]['place']);
+        self::assertSame('У дорозі 59', $this->rows->forOrder(7)->event_name);
+    }
+
+    /** Тік не робить нових запитів: дописує свою останню подію до вже збереженої історії, без повторів. */
+    public function testTickAppendsTheLatestEventOnce(): void
+    {
+        $this->shipment(1, $this->barcode(1), ['history' => ShipmentHistory::encode(ShipmentHistory::fromEvents(TrackingEvent::history([
+            ['event' => 10100, 'eventName' => 'Прийнято', 'date' => '2026-11-08T09:00:00'],
+        ])))]);
+        $arrived = ['barcode' => $this->barcode(1), 'event' => 21700, 'eventName' => 'Надійшло у відділення', 'name' => 'Львів 7', 'index' => '79007', 'date' => '2026-11-09T10:00:00'];
+        $this->transport->json(200, [$arrived]);
+        $this->tracking()->tick();
+        $this->rows->rows[1]->checked_at = null;
+        $this->transport->json(200, [$arrived]);
+        $this->tracking()->tick();
+
+        $history = ShipmentHistory::decode($this->rows->forOrder(1)->history);
+        self::assertCount(2, $this->transport->requests(), 'one request per tick, as before');
+        self::assertSame([10100, 21700], array_column($history, 'code'));
+        self::assertSame('79007 Львів 7', $history[1]['place']);
+    }
+
+    /** «Оновити» записало повну історію, поки тік чекав на Укрпошту: тік дописує до неї, а не до свого старого знімка. */
+    public function testTickAppendsToTheHistoryRefreshJustSaved(): void
+    {
+        $this->shipment(1, $this->barcode(1), ['history' => ShipmentHistory::encode(ShipmentHistory::fromEvents(TrackingEvent::history([
+            ['event' => 10100, 'eventName' => 'Стара', 'date' => '2026-11-01T09:00:00'],
+        ])))]);
+        $fresh = [];
+        for ($i = 0; $i < ShipmentHistory::MAX_EVENTS; $i++) {
+            $fresh[] = ['event' => 20700, 'eventName' => 'Свіжа ' . $i, 'date' => date('Y-m-d\TH:i:s', strtotime('2026-11-02 00:00:00') + $i * 60)];
+        }
+        $this->rows->afterDue = function () use ($fresh): void {
+            $this->rows->rows[1]->history = ShipmentHistory::encode(ShipmentHistory::fromEvents(TrackingEvent::history($fresh)));
+        };
+        $this->transport->json(200, [['barcode' => $this->barcode(1), 'event' => 21700, 'eventName' => 'Нова', 'date' => '2026-11-09T10:00:00']]);
+
+        $this->tracking()->tick();
+
+        $history = ShipmentHistory::decode($this->rows->forOrder(1)->history);
+        self::assertCount(ShipmentHistory::MAX_EVENTS, $history);
+        self::assertNotContains('Стара', array_column($history, 'name'));
+        self::assertSame('Свіжа 1', $history[0]['name'], 'the oldest fresh one gives way to the new event');
+        self::assertSame('Нова', $history[ShipmentHistory::MAX_EVENTS - 1]['name']);
+    }
+
+    public function testTickStartsAHistoryForARowWithoutOne(): void
+    {
+        $this->shipment(1, $this->barcode(1));
+        $this->transport->json(200, [['barcode' => $this->barcode(1), 'event' => 21700, 'eventName' => 'Надійшло у відділення', 'date' => '2026-11-09T10:00:00']]);
+
+        $this->tracking()->tick();
+
+        self::assertSame([21700], array_column(ShipmentHistory::decode($this->rows->forOrder(1)->history), 'code'));
     }
 
     public function testRefreshWithoutShipmentIsRefused(): void

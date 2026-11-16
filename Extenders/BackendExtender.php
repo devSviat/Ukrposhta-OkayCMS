@@ -15,7 +15,6 @@ use Okay\Modules\Sviat\Ukrposhta\Orders\OrderDeliveryLines;
 use Okay\Modules\Sviat\Ukrposhta\Orders\OrderDeliveryStore;
 use Okay\Modules\Sviat\Ukrposhta\Orders\OrderPointChange;
 use Okay\Modules\Sviat\Ukrposhta\Orders\OrderRowsCleanup;
-use Okay\Modules\Sviat\Ukrposhta\Orders\OrdersListFilter;
 use Okay\Modules\Sviat\Ukrposhta\Orders\OrdersMassAction;
 use Okay\Modules\Sviat\Ukrposhta\Payments\CodPaymentInput;
 use Okay\Modules\Sviat\Ukrposhta\Payments\CodPayments;
@@ -123,33 +122,14 @@ class BackendExtender implements ExtensionInterface
         ];
     }
 
-    /**
-     * ChainExtension для BackendOrdersHelper::buildFilter: група статусів відправлення, ключове слово, що є
-     * штрихкодом, і дії списку (ядро виконує свої дії безпосередньо перед цим).
-     */
+    /** ChainExtension для BackendOrdersHelper::buildFilter: дія списку (ядро виконує свої дії безпосередньо перед цим). */
     public function listFilter($filter)
     {
-        if (!is_array($filter)) {
-            return $filter;
-        }
-        $this->handleMassAction();
-        $group = OrdersListFilter::group($this->request->get(OrdersListFilter::PARAM));
-        $this->design->assign('up_status_groups', ShipmentStatus::FILTER_GROUPS);
-        $this->design->assign('up_status_group', $group);
-        $keyword = $this->request->get('keyword');
-        $applied = OrdersListFilter::apply(
-            $filter,
-            $group,
-            is_string($keyword) ? $keyword : null,
-            fn(string $barcode): ?int => $this->shipments->orderOfBarcode($barcode),
-            (int)$this->module->getModuleIdByNamespace(__CLASS__),
-        );
-        // Ядро показує текст пошуку, лише поки він лишається у фільтрі; штрихкод звідти вилучено.
-        if (isset($filter['keyword']) && !isset($applied['keyword'])) {
-            $this->design->assign('keyword', $filter['keyword']);
+        if (is_array($filter)) {
+            $this->handleMassAction();
         }
 
-        return $applied;
+        return $filter;
     }
 
     private function handleMassAction(): void
@@ -183,23 +163,6 @@ class BackendExtender implements ExtensionInterface
             ->setContent($file->bytes, RESPONSE_TEXT)
             ->sendContent();
         exit;
-    }
-
-    /** ChainExtension для BackendOrdersHelper::buildCountStatusesFilter: лічильники статусів враховують фільтр модуля. */
-    public function countFilter($countFilter, $filter = [])
-    {
-        if (is_array($countFilter) && is_array($filter)) {
-            foreach (['id', 'up_without_shipment', 'up_status_groups'] as $key) {
-                if (isset($filter[$key])) {
-                    $countFilter[$key] = $filter[$key];
-                }
-            }
-            if (isset($filter['id']) && !isset($filter['keyword'])) {
-                unset($countFilter['keyword']);
-            }
-        }
-
-        return $countFilter;
     }
 
     /** QueueExtension для BackendOrdersHelper::findOrders: бейджі сторінки з бази одним запитом, без Укрпошти. */

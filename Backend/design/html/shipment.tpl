@@ -130,35 +130,75 @@
         {up_ship_attach}
     {else}
         {$c = $s.card}
-        <div class="up-ship__card">
-            <div class="up-ship__top">
-                <span class="up-ship__barcode">
-                    <button type="button" class="up-ship__copy fn_up_ship_copy" data-copy="{$c.barcode|escape}" data-copied="{$btr->sviat__ukrposhta__ship_copied|escape}" title="{$btr->sviat__ukrposhta__ship_copy|escape}">{$c.barcode|escape}</button>
+        <div class="up-card">
+            <div class="up-card__top">
+                {if $c.created}<span class="up-card__muted">{$btr->sviat__ukrposhta__ship_created_at|escape} {$c.created|escape}</span>{/if}
+                <div class="up-card__head">
+                    {* Власна монограма, не знак Укрпошти: офіційного SVG для вбудовування у відкритому доступі немає. *}
+                    <svg class="up-card__logo" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect width="16" height="16" rx="4" fill="#ffc400"/><path d="M4.4 4.2l3.1 5.2 2.9-5.2M7.5 9.4l-1.3 2.4" fill="none" stroke="#1d1d1b" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <button type="button" class="up-card__number fn_up_ship_copy" data-copy="{$c.barcode|escape}" data-copied="{$btr->sviat__ukrposhta__ship_copied|escape}" title="{$btr->sviat__ukrposhta__ship_copy|escape}">{$c.barcode|escape}</button>
+                    {if $c.statusKey}<span class="up-ship__badge up-ship__badge--{$c.statusGroup|escape}">{$btr->getTranslation($c.statusKey)|escape}</span>{/if}
+                </div>
+                <div class="up-card__event">
+                    {if $c.event}
+                        <b>{$c.event.name|escape}</b>{if $c.event.place}<span class="up-card__dot">{$c.event.place|escape}</span>{/if}{if $c.event.at}<span class="up-card__dot">{$c.event.at|escape}</span>{/if}
+                    {elseif $c.checked}
+                        <span class="text_grey">{$btr->sviat__ukrposhta__ship_no_events|escape}</span>
+                    {else}
+                        <span class="text_grey">{$btr->sviat__ukrposhta__ship_not_checked|escape}</span>
+                    {/if}
+                </div>
+            </div>
+            <div class="up-card__body">
+                <dl class="up-card__facts">
+                    {if $c.recipient || $c.phone}<div><dt>{$btr->sviat__ukrposhta__ship_recipient|escape}</dt><dd>{if $c.recipient}{$c.recipient|escape}{/if}{if $c.recipient && $c.phone}<br>{/if}{if $c.phone}{$c.phone|escape}{/if}</dd></div>{/if}
+                    {if $c.point}<div><dt>{$btr->sviat__ukrposhta__ship_point|escape}</dt><dd>{$c.point|escape}</dd></div>{/if}
+                    {if $c.deliveryPrice}<div><dt>{$btr->sviat__ukrposhta__ship_delivery_price|escape}</dt><dd><b>{$c.deliveryPrice|escape} ₴</b>{if $c.payerKey}<span class="up-card__dot">{$btr->sviat__ukrposhta__ship_pays|escape} {$btr->getTranslation($c.payerKey)|escape}</span>{/if}</dd></div>{/if}
+                    {if $c.plannedDate}<div><dt>{$btr->sviat__ukrposhta__ship_planned|escape}</dt><dd>{$c.plannedDate|escape}</dd></div>{/if}
+                    {if $c.declared}<div><dt>{$btr->sviat__ukrposhta__ship_declared_value|escape}</dt><dd>{$c.declared|escape} ₴</dd></div>{/if}
+                    {if $c.codAmount}<div><dt>{$btr->sviat__ukrposhta__ship_cod|escape}</dt><dd><b>{$c.codAmount|escape} ₴</b>{if $c.codFee}<span class="up-card__dot">{$btr->sviat__ukrposhta__ship_fee|escape} {$c.codFee|escape} ₴</span>{/if}</dd></div>{/if}
+                </dl>
+            </div>
+            {if $c.more || $c.history}
+                <div class="up-card__more" hidden><div class="up-card__more-inner">
+                    {if $c.more}
+                        {$m = $c.more}
+                        <dl class="up-card__facts">
+                            {if isset($m.typeKey)}<div><dt>{$btr->sviat__ukrposhta__shipping_type|escape}</dt><dd>{$btr->getTranslation($m.typeKey)|escape}</dd></div>{/if}
+                            {if isset($m.weight)}<div><dt>{$btr->sviat__ukrposhta__ship_weight|escape}</dt><dd>{$m.weight|escape}</dd></div>{/if}
+                            {if isset($m.sides)}<div><dt>{$btr->sviat__ukrposhta__ship_sides|escape}</dt><dd>{$m.sides|escape}</dd></div>{/if}
+                            {if isset($m.description)}<div><dt>{$btr->sviat__ukrposhta__shipping_description|escape}</dt><dd>{$m.description|escape}</dd></div>{/if}
+                            {if isset($m.onFailKey)}<div><dt>{$btr->sviat__ukrposhta__shipping_on_fail|escape}</dt><dd>{$btr->getTranslation($m.onFailKey)|escape}</dd></div>{/if}
+                            {if isset($m.sms)}<div><dt>{$btr->sviat__ukrposhta__shipping_sms|escape}</dt><dd>{if $m.sms}{$btr->sviat__ukrposhta__ship_yes|escape}{else}{$btr->sviat__ukrposhta__ship_no|escape}{/if}</dd></div>{/if}
+                        </dl>
+                    {/if}
+                    {if $c.history}
+                        <div class="up-card__caps">{$btr->sviat__ukrposhta__ship_history|escape}</div>
+                        <ol class="up-card__history">
+                            {foreach $c.history as $up_event}
+                                <li><span class="up-card__when">{$up_event.at|escape}</span><span>{$up_event.name|escape}{if $up_event.place}<span class="up-card__dot text_grey">{$up_event.place|escape}</span>{/if}</span></li>
+                            {/foreach}
+                        </ol>
+                    {/if}
+                </div></div>
+            {/if}
+            <div class="up-ship__issues up-card__issues" role="alert"></div>
+            <div class="up-card__footer">
+                {if $c.more || $c.history}<button type="button" class="up-card__more-toggle fn_up_ship_more" aria-expanded="false" data-more="{$btr->sviat__ukrposhta__ship_more|escape}" data-less="{$btr->sviat__ukrposhta__ship_less|escape}"><span>{$btr->sviat__ukrposhta__ship_more|escape}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6l6 -6"/></svg></button>{/if}
+                <span class="up-card__tools">
+                    {if $c.checked}<span class="up-card__meta">{$btr->sviat__ukrposhta__ship_checked_at|escape} {$c.checked|escape}</span>{/if}
+                    <button type="button" class="up-card__icon fn_up_ship_refresh" title="{$btr->sviat__ukrposhta__ship_refresh|escape}" aria-label="{$btr->sviat__ukrposhta__ship_refresh|escape}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4"/><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"/></svg></button>
+                    <span class="up-card__sep" aria-hidden="true"></span>
+                    <span class="up-card__print">
+                        <button type="button" class="btn btn_small btn_blue fn_up_ship_label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2"/><path d="M17 9v-4a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v4"/><path d="M7 15a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2z"/></svg>{$btr->sviat__ukrposhta__ship_label_short|escape}</button>
+                        <select class="form-control up-ship__size" data-label="size" aria-label="{$btr->sviat__ukrposhta__shipping_label_size|escape}">
+                            <option value="SIZE_10X10" {if $s.labelSize == 'SIZE_10X10'}selected{/if}>{$btr->sviat__ukrposhta__label_size_10x10|escape}</option>
+                            <option value="SIZE_A4" {if $s.labelSize == 'SIZE_A4'}selected{/if}>{$btr->sviat__ukrposhta__label_size_a4|escape}</option>
+                        </select>
+                    </span>
+                    {if isset($s.can.remove)}<button type="button" class="up-card__icon up-card__icon--danger fn_up_ship_remove" title="{$btr->sviat__ukrposhta__ship_remove_title|escape}" aria-label="{$btr->sviat__ukrposhta__ship_remove_title|escape}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg></button>{/if}
+                    <button type="button" class="up-card__icon up-card__icon--danger fn_up_ship_unlink" title="{$btr->sviat__ukrposhta__ship_unlink_title|escape}" aria-label="{$btr->sviat__ukrposhta__ship_unlink_title|escape}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 15l6 -6"/><path d="M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464"/><path d="M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463"/><path d="M16 19h5"/></svg></button>
                 </span>
-                {if $c.statusKey}<span class="up-ship__badge up-ship__badge--{$c.statusGroup|escape}">{$btr->getTranslation($c.statusKey)|escape}</span>{/if}
-            </div>
-            <div class="up-ship__body">
-                <div>
-                    {if $c.eventName}<div class="up-ship__line"><span class="up-ship__label">{$btr->sviat__ukrposhta__ship_event|escape}</span>{$c.eventName|escape}{if $c.eventAt}, {$c.eventAt|escape}{/if}</div>{/if}
-                    {if $c.created}<div class="up-ship__line"><span class="up-ship__label">{$btr->sviat__ukrposhta__ship_created_at|escape}</span>{$c.created|escape}</div>{/if}
-                    <div class="up-ship__line text_grey">{if $c.checked}{$btr->sviat__ukrposhta__ship_checked_at|escape} {$c.checked|escape}{else}{$btr->sviat__ukrposhta__ship_not_checked|escape}{/if}</div>
-                </div>
-                <div>
-                    {if $c.deliveryPrice}<div class="up-ship__line"><span class="up-ship__label">{$btr->sviat__ukrposhta__ship_delivery_price|escape}</span><b>{$c.deliveryPrice|escape} ₴</b>{if $c.payerKey} · {$btr->sviat__ukrposhta__ship_pays|escape} {$btr->getTranslation($c.payerKey)|escape}{/if}</div>{/if}
-                    {if $c.codAmount}<div class="up-ship__line"><span class="up-ship__label">{$btr->sviat__ukrposhta__ship_cod_amount|escape}</span><b>{$c.codAmount|escape} ₴</b></div>{/if}
-                    {if $c.codFee}<div class="up-ship__line"><span class="up-ship__label">{$btr->sviat__ukrposhta__ship_cod_fee|escape}</span>{$c.codFee|escape} ₴</div>{/if}
-                </div>
-            </div>
-            <div class="up-ship__issues" role="alert"></div>
-            <div class="up-ship__actions">
-                <select class="form-control up-ship__size" data-label="size" aria-label="{$btr->sviat__ukrposhta__shipping_label_size|escape}">
-                    <option value="SIZE_10X10" {if $s.labelSize == 'SIZE_10X10'}selected{/if}>{$btr->sviat__ukrposhta__label_size_10x10|escape}</option>
-                    <option value="SIZE_A4" {if $s.labelSize == 'SIZE_A4'}selected{/if}>{$btr->sviat__ukrposhta__label_size_a4|escape}</option>
-                </select>
-                <button type="button" class="btn btn_small btn_blue fn_up_ship_label">{$btr->sviat__ukrposhta__ship_label|escape}</button>
-                <button type="button" class="btn btn_small btn_border_blue fn_up_ship_refresh">{$btr->sviat__ukrposhta__ship_refresh|escape}</button>
-                {if isset($s.can.remove)}<button type="button" class="btn btn_small btn-danger fn_up_ship_remove">{$btr->sviat__ukrposhta__ship_remove|escape}</button>{/if}
-                <button type="button" class="btn btn_small btn_border_blue fn_up_ship_unlink">{$btr->sviat__ukrposhta__ship_unlink|escape}</button>
             </div>
         </div>
     {/if}

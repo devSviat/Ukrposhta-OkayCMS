@@ -2,6 +2,8 @@
 
 namespace Okay\Modules\Sviat\Ukrposhta;
 
+use Okay\Core\Modules\Modules;
+use Okay\Modules\Sviat\Ukrposhta\Extenders\DeliveryFilterExtender;
 use Okay\Core\BackendTranslations;
 use Okay\Core\Cart;
 use Okay\Core\Database;
@@ -266,6 +268,10 @@ return [
     OrderRowsCleanup::class => [
         'class' => OrderRowsCleanup::class,
         'arguments' => [new SR(EntityFactory::class), new SR(StateStorage::class), new SR(ExistingOrders::class)],
+    ],
+    DeliveryFilterExtender::class => [
+        'class' => DeliveryFilterExtender::class,
+        'arguments' => [new SR(ShipmentRows::class), new SR(BackendTranslations::class), new SR(Module::class), new SR(Modules::class)],
     ],
     BackendExtender::class => [
         'class' => BackendExtender::class,

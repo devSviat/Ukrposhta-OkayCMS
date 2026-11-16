@@ -3,8 +3,10 @@
 namespace Modules\Sviat\Ukrposhta\Support;
 
 use Okay\Modules\Sviat\Ukrposhta\Shipments\PendingShipment;
+use Okay\Modules\Sviat\Ukrposhta\Shipments\ShipmentHistory;
 use Okay\Modules\Sviat\Ukrposhta\Shipments\ShipmentRows;
 use Okay\Modules\Sviat\Ukrposhta\Shipments\ShipmentStatus;
+use Okay\Modules\Sviat\Ukrposhta\Shipments\TrackingEvent;
 
 /** Повторює унікальні order_id і barcode таблиці: дубль не записується, як і в базі. */
 final class InMemoryShipmentRows implements ShipmentRows
@@ -14,6 +16,8 @@ final class InMemoryShipmentRows implements ShipmentRows
     public int $now = 1_900_000_000;
     /** База відхилила запис після того, як Укрпошта створила відправлення. */
     public bool $failComplete = false;
+    /** Що встигло змінитися в базі між вибіркою тіку й його записом (наприклад, кнопка «Оновити»). */
+    public ?\Closure $afterDue = null;
 
     public function forOrder(int $orderId): ?object
     {
@@ -106,8 +110,13 @@ final class InMemoryShipmentRows implements ShipmentRows
             && !in_array($row->status_group ?? null, ShipmentStatus::FINAL, true)
             && (($row->checked_at ?? null) === null || $row->checked_at < $checkedBefore));
         usort($due, static fn(object $a, object $b): int => [$a->checked_at ?? '', $a->order_id] <=> [$b->checked_at ?? '', $b->order_id]);
+        // Як і база, віддає знімки рядків: пізніші зміни рядка їх не торкаються.
+        $snapshots = array_map(static fn(object $row): object => clone $row, array_slice(array_values($due), 0, $limit));
+        if ($this->afterDue !== null) {
+            ($this->afterDue)();
+        }
 
-        return array_slice(array_values($due), 0, $limit);
+        return $snapshots;
     }
 
     public function dueForLifecycle(int $limit, string $createdSince, string $checkedBefore): array
@@ -126,6 +135,12 @@ final class InMemoryShipmentRows implements ShipmentRows
     public function saveEvent(int $orderId, array $event, string $checkedAt): void
     {
         $this->update($orderId, $event + ['checked_at' => $checkedAt]);
+    }
+
+    public function saveTickEvent(int $orderId, array $event, TrackingEvent $latest, string $checkedAt): void
+    {
+        $history = ShipmentHistory::decode($this->rows[$orderId]->history ?? null);
+        $this->update($orderId, $event + ['checked_at' => $checkedAt, 'history' => ShipmentHistory::encode(ShipmentHistory::append($history, $latest))]);
     }
 
     public function markChecked(int $orderId, string $checkedAt): void
