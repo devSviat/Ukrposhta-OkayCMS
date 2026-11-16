@@ -20,25 +20,67 @@
 .up-ship__unlink { margin-top: 12px; }
 .up-ship__unlink p { margin-bottom: 6px; font-size: 12px; }
 .up-ship__issues .alert, .up-ship__notices .alert, .up-ship__auth { margin-top: 8px; }
-.up-ship__top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 10px; }
-.up-ship__copy { padding: 0; border: 0; background: none; font: inherit; font-size: 18px; font-weight: 600; letter-spacing: .04em; color: var(--ok-accent, #005893); cursor: copy; }
-.up-ship__copy.is-copied { color: var(--ok-success, #227d3a); }
-.up-ship__body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.up-ship__badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; background: var(--ok-thead, #e8ebee); color: var(--ok-ink, #23272b); }
-.up-ship__badge--created, .up-ship__badge--storage, .up-ship__badge--problem { background: var(--ok-warning-soft, #fdf2e3); color: var(--ok-warning, #a35a00); }
-.up-ship__badge--accepted, .up-ship__badge--in_transit, .up-ship__badge--arrived { background: var(--ok-accent-soft, #e6f0f7); color: var(--ok-accent, #005893); }
-.up-ship__badge--received { background: var(--ok-success-soft, #eaf3ed); color: var(--ok-success, #227d3a); }
-.up-ship__badge--returning, .up-ship__badge--returned, .up-ship__badge--cancelled { background: var(--ok-danger-soft, #fbebea); color: var(--ok-danger, #c8352c); }
+/* Уся накладна в рамці, як картка NP (waybill.css): шапка, тіло й футер розділені лініями на всю ширину рамки. */
+.up-card { container-type: inline-size; border: 1px solid var(--ok-line, #e4e6e9); border-radius: 10px; background: var(--ok-surface, #fff); }
+.up-card__top { display: flex; flex-direction: column; gap: 4px; padding: 16px 20px; border-bottom: 1px solid var(--ok-line, #e4e6e9); }
+.up-card__muted { font-size: 12px; color: var(--ok-ink-muted, #676e75); }
+.up-card__head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.up-card__logo { flex: none; display: block; width: 20px; height: 20px; }
+.up-card__number { padding: 0; border: 0; background: none; font: inherit; font-size: 26px; font-weight: 600; line-height: 1.2; color: var(--ok-ink, #23272b); cursor: copy; }
+.up-card__number:hover, .up-card__number.is-copied { color: var(--ok-accent, #135c94); }
+.up-card__event { font-size: 14px; line-height: 1.4; }
+.up-card__dot::before { content: "·"; margin: 0 6px; color: var(--ok-ink-muted, #676e75); }
+.up-card__body { padding: 16px 20px; }
+.up-card__facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px 20px; margin: 0; }
+.up-card__facts dt { margin: 0 0 2px; font-size: 13px; font-weight: 400; color: var(--ok-ink-muted, #676e75); }
+.up-card__facts dd { margin: 0; font-size: 14px; line-height: 1.35; overflow-wrap: anywhere; }
+.up-card__more { background: #f2f4f4; }
+.up-card__more[hidden] { display: none; }
+.up-card__more-inner { padding: 16px 20px; }
+.up-card__issues .alert { margin: 12px 20px 0; }
+.up-card__footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 20px; border-top: 1px solid var(--ok-line, #e4e6e9); font-size: 13px; }
+.up-card__more-toggle { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border: 0; border-radius: 4px; background: #f5f5f5; color: #757575; font-size: 14px; font-weight: 500; cursor: pointer; }
+.up-card__more-toggle:hover { background: #e7e7e7; }
+.up-card__more-toggle svg { transition: transform .3s ease; }
+.up-card__more-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+.up-card__tools { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-left: auto; }
+.up-card__meta { margin-right: 2px; font-size: 12px; color: var(--ok-ink-muted, #676e75); }
+.up-card__sep { width: 1px; height: 24px; margin: 0 4px; background: var(--ok-line, #e4e6e9); }
+.up-card__print { display: inline-flex; align-items: stretch; gap: 6px; }
+.up-card__print .btn svg { margin-right: 4px; vertical-align: -3px; }
+.up-card__print .up-ship__size { height: auto; padding-top: 0; padding-bottom: 0; }
+.up-card__icon { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--ok-ink-muted, #676e75); cursor: pointer; }
+.up-card__icon:hover, .up-card__icon:focus-visible { background: var(--ok-sunken, #eef0f3); color: var(--ok-ink, #212529); }
+.up-card__icon--danger:hover, .up-card__icon--danger:focus-visible { color: var(--ok-danger, #c8352c); }
+.up-card__caps { margin: 14px 0 6px; font-size: 14px; font-weight: 600; text-transform: uppercase; color: var(--ok-ink, #212529); }
+.up-card__history { margin: 0; padding: 0; list-style: none; font-size: 13px; line-height: 1.35; }
+.up-card__history li { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 8px; padding: 5px 0; border-top: 1px solid #e3e6e6; }
+.up-card__when { white-space: nowrap; color: var(--ok-ink-muted, #676e75); }
+@container (max-width: 440px) {
+    .up-card__top, .up-card__body, .up-card__more-inner, .up-card__footer { padding-left: 14px; padding-right: 14px; }
+    .up-card__number { font-size: 20px; }
+    .up-card__facts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; }
+    .up-card__history li { grid-template-columns: minmax(0, 1fr); gap: 0; }
+    .up-card__meta { display: none; }
+}
+/* Тони бейджів ті самі, що в накладної NP (waybill.css): група Укрпошти лише обирає тон. */
+.up-ship__badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; background: #e2e3e5; color: #383d41; }
+.up-ship__badge--created, .up-ship__badge--storage, .up-ship__badge--unsettled { background: #fff3cd; color: #856404; }
+.up-ship__badge--accepted, .up-ship__badge--in_transit { background: #cfe2ff; color: #084298; }
+.up-ship__badge--arrived { background: #d1e2e7; color: #0f5132; }
+.up-ship__badge--received { background: #d1e7dd; color: #0f5132; }
+.up-ship__badge--problem, .up-ship__badge--returning, .up-ship__badge--returned { background: #f8d7da; color: #721c24; }
+.up-ship__badge--cancelled { background: #e2e3e5; color: #383d41; }
 .up-ship button.is-busy { cursor: progress; opacity: .7; }
 @media (max-width: 575px) {
-    .up-ship__grid, .up-ship__body { grid-template-columns: 1fr; }
+    .up-ship__grid { grid-template-columns: 1fr; }
 }
-.up-ship__badge--unsettled { background: var(--ok-warning-soft, #fdf2e3); color: var(--ok-warning, #a35a00); }
 .up-list-status { margin-top: 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; }
+.up-list-status__logo { flex: none; display: block; }
 .okay_list .up-list-status a.up-list-status__barcode:not(.btn) { color: #646464; white-space: nowrap; text-decoration: none; }
 .okay_list .up-list-status a.up-list-status__barcode:not(.btn):hover { color: var(--ok-accent, #135c94); }
 .okay_list .up-list-status a.up-list-status__barcode.is-copied:not(.btn) { color: var(--ok-ink, #1f2328); }
-.up-list-status .up-ship__badge { padding: 3px 6px; font-size: 10px; line-height: 1; white-space: nowrap; }
+.up-list-status .up-ship__badge { margin-left: 4px; padding: 3px 6px; font-size: 10px; line-height: 1; white-space: nowrap; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .1); }
 .up-mass { display: flex; flex-direction: column; gap: 6px; }
 .up-mass__head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .up-mass__title { font-weight: 600; }

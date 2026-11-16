@@ -5,14 +5,16 @@ namespace Okay\Modules\Sviat\Ukrposhta\Shipments;
 /**
  * Де зберігаються відправлення замовлень: одне на замовлення.
  *
- * Поля відправлення в $shipment: uuid, barcode, status (lifecycle eCom), delivery_price, cod_amount, cod_fee, paid_by_recipient (null — невідомо).
+ * Поля відправлення в $shipment: uuid, barcode, status (lifecycle eCom), delivery_price, cod_amount, cod_fee, paid_by_recipient (null — невідомо),
+ * details (JSON ShipmentDetails). Колонки `details` і `history` з'являються лише після оновлення модуля до 1.3.0:
+ * до того сховище їх не пише й не читає.
  */
 interface ShipmentRows
 {
     public function forOrder(int $orderId): ?object;
 
     /**
-     * Рядки сторінки списку замовлень одним запитом.
+     * Рядки сторінки списку замовлень одним запитом, лише з колонками рядка списку (штрихкод, стан, група, подія).
      *
      * @param list<int> $orderIds
      * @return array<int, object> за id замовлення
@@ -30,14 +32,14 @@ interface ShipmentRows
     /**
      * Перетворює резервацію чи невідомий рядок на відправлення. False, коли запис не вдався.
      *
-     * @param array{uuid: string, barcode: string, status: ?string, delivery_price: ?float, cod_amount: ?float, cod_fee: ?float, paid_by_recipient: ?bool} $shipment
+     * @param array{uuid: string, barcode: string, status: ?string, delivery_price: ?float, cod_amount: ?float, cod_fee: ?float, paid_by_recipient: ?bool, details?: ?string} $shipment
      */
     public function complete(int $orderId, array $shipment): bool;
 
     /**
      * Прив'язує відправлення, створене деінде. False, коли замовлення чи штрихкод уже зайняті.
      *
-     * @param array{uuid: string, barcode: string, status: ?string, delivery_price: ?float, cod_amount: ?float, cod_fee: ?float, paid_by_recipient: ?bool} $shipment
+     * @param array{uuid: string, barcode: string, status: ?string, delivery_price: ?float, cod_amount: ?float, cod_fee: ?float, paid_by_recipient: ?bool, details?: ?string} $shipment
      */
     public function add(int $orderId, array $shipment): bool;
 
@@ -73,9 +75,17 @@ interface ShipmentRows
     /**
      * Записує подію трекінгу й час опитування.
      *
-     * @param array{event_code: int, event_name: string, event_at: string, event_reason: ?int, status_group?: ?string} $event
+     * @param array{event_code: int, event_name: string, event_at: string, event_reason: ?int, status_group?: ?string, history?: ?string} $event history — JSON ShipmentHistory
      */
     public function saveEvent(int $orderId, array $event, string $checkedAt): void;
+
+    /**
+     * Подія тіку: те саме, що saveEvent, а `$latest` дописується до історії рядка, перечитаного перед записом.
+     * Тік не бере історію зі своєї вибірки: «Оновити статус» могло зберегти повнішу, поки тік чекав на Укрпошту.
+     *
+     * @param array{event_code: int, event_name: string, event_at: string, event_reason: ?int} $event
+     */
+    public function saveTickEvent(int $orderId, array $event, TrackingEvent $latest, string $checkedAt): void;
 
     /** Відправлення опитано, а події немає: рядок іде в кінець черги. */
     public function markChecked(int $orderId, string $checkedAt): void;

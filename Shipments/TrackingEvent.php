@@ -14,21 +14,30 @@ final readonly class TrackingEvent
         public ?int $step,
         public ?int $reason,
         public string $barcode = '',
+        public string $place = '',
     ) {
     }
 
-    /** @param array<string, mixed> $e */
+    /**
+     * Назва події — `eventName`, а `name` поруч із ним — місце разом з `index`. Без `eventName` подією лишається `name`:
+     * локальна документація Status-tracking поля не описує, тож жодне з них не відкидається.
+     *
+     * @param array<string, mixed> $e
+     */
     public static function fromApi(array $e): self
     {
-        $name = $e['name'] ?? $e['eventName'] ?? '';
+        $eventName = self::text($e['eventName'] ?? null);
+        $name = self::text($e['name'] ?? null);
+        $place = implode(' ', array_filter([self::text($e['index'] ?? null), $eventName !== '' ? $name : ''], static fn(string $part): bool => $part !== ''));
 
         return new self(
             self::int($e['event'] ?? null),
-            is_string($name) ? $name : '',
+            $eventName !== '' ? $eventName : $name,
             self::timestamp($e['date'] ?? null),
             self::int($e['step'] ?? null),
             self::int($e['eventReason_id'] ?? null),
             is_string($e['barcode'] ?? null) ? $e['barcode'] : '',
+            $place,
         );
     }
 
@@ -58,6 +67,11 @@ final readonly class TrackingEvent
     public function at(): ?string
     {
         return $this->timestamp === null ? null : date('Y-m-d H:i:s', $this->timestamp);
+    }
+
+    private static function text(mixed $value): string
+    {
+        return is_string($value) || is_int($value) ? trim((string)$value) : '';
     }
 
     /** Укрпошта віддає event то числом, то рядком. */

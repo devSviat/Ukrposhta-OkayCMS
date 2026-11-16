@@ -51,4 +51,25 @@ class TrackingEventTest extends TestCase
         self::assertCount(1, $events);
         self::assertSame(21700, $events[0]->code);
     }
+
+    /**
+     * Status-tracking віддає і `name`, і `eventName`; що з них місце, локальна документація не каже. Подія — eventName,
+     * а `name` з індексом лишається місцем, щоб жодне поле не загубилось.
+     */
+    public function testEventNameIsTheEventAndNameWithIndexIsThePlace(): void
+    {
+        $event = TrackingEvent::fromApi(['event' => 21700, 'index' => '79007', 'name' => 'Львів 7', 'eventName' => 'Надійшло у відділення', 'date' => '2026-11-09T10:00:00']);
+
+        self::assertSame('Надійшло у відділення', $event->name);
+        self::assertSame('79007 Львів 7', $event->place);
+    }
+
+    public function testWithoutEventNameTheNameStaysTheEventAndIndexIsThePlace(): void
+    {
+        $event = TrackingEvent::fromApi(['event' => 21700, 'index' => '79007', 'name' => 'Прибуло', 'date' => '2026-11-09T10:00:00']);
+
+        self::assertSame('Прибуло', $event->name);
+        self::assertSame('79007', $event->place);
+        self::assertSame('', TrackingEvent::fromApi(['event' => 21700, 'name' => 'Прибуло', 'index' => ['x']])->place);
+    }
 }

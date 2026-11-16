@@ -12,6 +12,14 @@ use Okay\Modules\Sviat\Ukrposhta\Shipments\ShipmentStatus;
  */
 class ShipmentEntity extends Entity
 {
+    /**
+     * Колонки 1.3.0 (JSON ShipmentDetails і ShipmentHistory). Їх немає в `$fields`: до оновлення модуля в таблиці їх
+     * немає, а SELECT із ними впав би мовчки й сховав відправлення. Init::init() реєструє їх після update_1_3_0().
+     */
+    public const array LATE_FIELDS = ['details', 'history'];
+    /** Налаштування, яке ставить update_1_3_0() (та install()): колонки вже в таблиці. */
+    public const string LATE_FIELDS_SETTING = 'sviat__ukrposhta__shipment_columns';
+
     protected static $fields = [
         'id',
         'order_id',
@@ -34,6 +42,17 @@ class ShipmentEntity extends Entity
         'lifecycle_checked_at',
         'reserved_at',
     ];
+
+    /**
+     * Лише колонки, які entity знає: ядро пише в INSERT/UPDATE усі ключі, і невідома колонка провалила б увесь запис.
+     *
+     * @param array<string, mixed> $values
+     * @return array<string, mixed>
+     */
+    public static function knownColumns(array $values): array
+    {
+        return array_intersect_key($values, array_flip(static::getAllDefaultFields()));
+    }
 
     /** Відправлення, які трекінг ще має опитувати: зі штрихкодом, без фінальної групи, створені не раніше `since`. */
     protected function filter__trackable(string $since): void

@@ -7,6 +7,9 @@ use Okay\Modules\Sviat\Ukrposhta\Entities\ShipmentEntity;
 
 final class ShipmentStore implements ShipmentRows
 {
+    /** Що читає рядок відправлення в списку замовлень: без JSON знімка й історії. */
+    public const array LIST_COLUMNS = ['order_id', 'barcode', 'state', 'status', 'status_group', 'event_code', 'event_name', 'event_reason'];
+
     public function __construct(private readonly EntityFactory $entityFactory)
     {
     }
@@ -25,7 +28,7 @@ final class ShipmentStore implements ShipmentRows
             return [];
         }
         $rows = [];
-        foreach ($this->entity()->find(['order_id' => $orderIds, 'limit' => count($orderIds)]) as $row) {
+        foreach ($this->entity()->cols(self::LIST_COLUMNS)->find(['order_id' => $orderIds, 'limit' => count($orderIds)]) as $row) {
             $rows[(int)$row->order_id] = $row;
         }
 
@@ -58,7 +61,7 @@ final class ShipmentStore implements ShipmentRows
         if (!PendingShipment::is($row)) {
             return false;
         }
-        $this->entity()->update((int)$row->id, $shipment + ['state' => PendingShipment::CREATED, 'reserved_at' => null, 'status_group' => self::initialGroup($shipment)]);
+        $this->entity()->update((int)$row->id, ShipmentEntity::knownColumns($shipment + ['state' => PendingShipment::CREATED, 'reserved_at' => null, 'status_group' => self::initialGroup($shipment)]));
         $saved = $this->forOrder($orderId);
 
         // Дубль штрихкоду update() теж ковтає: успіх видно лише з перечитаного рядка.
@@ -67,12 +70,12 @@ final class ShipmentStore implements ShipmentRows
 
     public function add(int $orderId, array $shipment): bool
     {
-        return (bool)$this->entity()->add($shipment + [
+        return (bool)$this->entity()->add(ShipmentEntity::knownColumns($shipment + [
             'status_group' => self::initialGroup($shipment),
             'order_id' => $orderId,
             'state' => PendingShipment::CREATED,
             'created_at' => date('Y-m-d H:i:s'),
-        ]);
+        ]));
     }
 
     public function rememberSender(int $orderId, string $senderUuid): void
@@ -122,6 +125,13 @@ final class ShipmentStore implements ShipmentRows
         $this->updateCreated($orderId, $event + ['checked_at' => $checkedAt]);
     }
 
+    public function saveTickEvent(int $orderId, array $event, TrackingEvent $latest, string $checkedAt): void
+    {
+        $this->updateCreated($orderId, $event + ['checked_at' => $checkedAt], static fn(object $row): array => [
+            'history' => ShipmentHistory::encode(ShipmentHistory::append(ShipmentHistory::decode($row->history ?? null), $latest)),
+        ]);
+    }
+
     public function markChecked(int $orderId, string $checkedAt): void
     {
         $this->updateCreated($orderId, ['checked_at' => $checkedAt]);
@@ -132,12 +142,16 @@ final class ShipmentStore implements ShipmentRows
         $this->updateCreated($orderId, ['status' => $status, 'lifecycle_checked_at' => $checkedAt]);
     }
 
-    /** @param array<string, mixed> $values */
-    private function updateCreated(int $orderId, array $values): void
+    /**
+     * @param array<string, mixed> $values
+     * @param ?\Closure(object): array<string, mixed> $fromRow значення, що залежать від щойно перечитаного рядка
+     */
+    private function updateCreated(int $orderId, array $values, ?\Closure $fromRow = null): void
     {
         $row = $this->forOrder($orderId);
         if ($row !== null && !PendingShipment::is($row)) {
-            $this->entity()->update((int)$row->id, $values + ['status_group' => ShipmentStatus::afterUpdate($row, $values)]);
+            $values += $fromRow !== null ? $fromRow($row) : [];
+            $this->entity()->update((int)$row->id, ShipmentEntity::knownColumns($values + ['status_group' => ShipmentStatus::afterUpdate($row, $values)]));
         }
     }
 

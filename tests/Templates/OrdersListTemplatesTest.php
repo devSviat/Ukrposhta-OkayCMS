@@ -18,9 +18,13 @@ class OrdersListTemplatesTest extends TestCase
         ]]]);
 
         self::assertStringContainsString('data-copy-string="0500000000017"', $html);
+        self::assertMatchesRegularExpression('~<svg class="up-list-status__logo" width="16" height="16"[^>]*aria-hidden="true">.*</svg>\s*<a [^>]*up-list-status__barcode~s', $html, 'monogram before the number');
+        self::assertStringNotContainsString('<img', $html, 'inline, no request');
         self::assertStringContainsString('up-ship__badge--arrived', $html);
         self::assertStringNotContainsString(self::XSS, $html);
         self::assertSame('', trim(self::render('orders_status.tpl', ['order' => (object)['id' => 12]])));
+        $unsettled = self::render('orders_status.tpl', ['order' => (object)['id' => 13, 'up_shipment' => ['barcode' => null, 'group' => 'unsettled', 'statusKey' => 'sviat__ukrposhta__list_unsettled', 'eventName' => null]]]);
+        self::assertStringContainsString('up-list-status__logo', $unsettled, 'the carrier is visible before the barcode exists');
     }
 
     public function testMassResultEscapesRowsAndError(): void

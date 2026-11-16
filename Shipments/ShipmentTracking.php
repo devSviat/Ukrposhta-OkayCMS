@@ -106,7 +106,10 @@ final class ShipmentTracking
 
             return new ShipmentOutcome(true, (string)$row->barcode, [], ['sviat__ukrposhta__track_no_events']);
         }
-        $this->rows->saveEvent($orderId, $this->eventValues($latest) + ['status_group' => $this->groupOf($history, $row)], $this->stamp());
+        $this->rows->saveEvent($orderId, $this->eventValues($latest) + [
+            'status_group' => $this->groupOf($history, $row),
+            'history' => ShipmentHistory::encode(ShipmentHistory::fromEvents($history)),
+        ], $this->stamp());
 
         return new ShipmentOutcome(true, (string)$row->barcode);
     }
@@ -149,7 +152,8 @@ final class ShipmentTracking
                     $this->rows->markChecked((int)$row->order_id, $this->stamp());
                     continue;
                 }
-                $this->rows->saveEvent((int)$row->order_id, $this->eventValues($event), $this->stamp());
+                // Без запиту історії: подія, що з'явилась і змінилась між двома тіками, сюди не потрапить.
+                $this->rows->saveTickEvent((int)$row->order_id, $this->eventValues($event), $event, $this->stamp());
             }
         }
     }

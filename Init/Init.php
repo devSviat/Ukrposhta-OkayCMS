@@ -16,6 +16,7 @@ use Okay\Core\Modules\EntityField;
 use Okay\Core\QueryFactory;
 use Okay\Core\Scheduler\Schedule;
 use Okay\Core\ServiceLocator;
+use Okay\Core\Settings;
 use Okay\Entities\LanguagesEntity;
 use Okay\Entities\OrdersEntity;
 use Okay\Entities\PaymentsEntity;
@@ -48,6 +49,62 @@ class Init extends AbstractInit
         $this->createMissingTables(self::tables());
         $this->addDefaultGroups();
         $this->addCoreFields();
+        // Таблиця могла лишитися від видаленого модуля старішої версії: createMissingTables() її не чіпає.
+        $this->addLateShipmentColumns();
+    }
+
+    public function update_1_3_0(): void
+    {
+        $this->addLateShipmentColumns();
+    }
+
+    /** Повторний запуск безпечний: migrateEntityField() додає лише відсутню колонку. */
+    private function addLateShipmentColumns(): void
+    {
+        $serviceLocator = ServiceLocator::getInstance();
+        /** @var Database $db */
+        $db = $serviceLocator->getService(Database::class);
+        $queryFactory = $serviceLocator->getService(QueryFactory::class);
+        self::addLateShipmentColumnsWith(
+            fn(EntityField $field) => $this->migrateEntityField(ShipmentEntity::class, $field),
+            static function () use ($db, $queryFactory): array {
+                $db->query($queryFactory->newSqlQuery()->setStatement('SHOW COLUMNS FROM `' . ShipmentEntity::getTable() . '`'));
+
+                return array_map(static fn(object $column): string => (string)$column->Field, $db->results() ?: []);
+            },
+            static fn() => $serviceLocator->getService(Settings::class)->set(ShipmentEntity::LATE_FIELDS_SETTING, '1'),
+        );
+    }
+
+    /**
+     * Ядро ковтає помилку ALTER, тож прапорець, з яким entity починає читати колонки, ставиться лише після того,
+     * як таблиця їх справді показала: інакше SELECT упав би, і відправлення зникли б з карток.
+     *
+     * @param \Closure(EntityField): void $migrate
+     * @param \Closure(): list<string> $columns назви колонок таблиці відправлень
+     * @param \Closure(): void $markReady
+     * @return bool false — колонок немає, прапорець не поставлено
+     */
+    public static function addLateShipmentColumnsWith(\Closure $migrate, \Closure $columns, \Closure $markReady): bool
+    {
+        foreach (self::lateShipmentColumns() as $field) {
+            $migrate($field);
+        }
+        if (array_diff(ShipmentEntity::LATE_FIELDS, $columns()) !== []) {
+            return false;
+        }
+        $markReady();
+
+        return true;
+    }
+
+    /** @return list<EntityField> */
+    public static function lateShipmentColumns(): array
+    {
+        return [
+            new EntityField('details')->setTypeText()->setNullable(),
+            new EntityField('history')->setTypeMediumText()->setNullable(),
+        ];
     }
 
     /**
@@ -62,6 +119,12 @@ class Init extends AbstractInit
     public function init()
     {
         $this->registerEntityField(PaymentsEntity::class, CodPayments::FIELD);
+        // Налаштування ядро вже читає на кожному запиті: перевірка не коштує окремого запиту до бази.
+        if (ServiceLocator::getInstance()->getService(Settings::class)->get(ShipmentEntity::LATE_FIELDS_SETTING)) {
+            foreach (ShipmentEntity::LATE_FIELDS as $field) {
+                $this->registerEntityField(ShipmentEntity::class, $field);
+            }
+        }
 
         $this->addFrontBlock('front_cart_delivery', 'cart_delivery.tpl');
         $this->addFrontBlock('front_cart_payment', 'cart_cod_fee.tpl');
@@ -199,6 +262,7 @@ class Init extends AbstractInit
                 new EntityField('checked_at')->setTypeDatetime(),
                 new EntityField('lifecycle_checked_at')->setTypeDatetime(),
                 new EntityField('reserved_at')->setTypeDatetime(),
+                ...self::lateShipmentColumns(),
             ],
         ];
     }
