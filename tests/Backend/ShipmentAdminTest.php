@@ -57,6 +57,7 @@ class ShipmentAdminTest extends TestCase
     {
         $_POST = [];
         $_SESSION = [];
+        session_id('');
     }
 
     private function call(string $method, array $post): void
@@ -133,9 +134,11 @@ class ShipmentAdminTest extends TestCase
         $this->rows->add(7, ['uuid' => 'u-1', 'barcode' => '0500012345678', 'status' => 'CREATED', 'delivery_price' => 50.0, 'cod_amount' => null, 'cod_fee' => null, 'paid_by_recipient' => true]);
     }
 
+    /** Форк звіряє токен із $_SESSION['id'], сток 4.5.3 — із session_id(): заповнюємо обидва. */
     private function signedIn(): string
     {
         $_SESSION['id'] = str_repeat('c', 64);
+        session_id($_SESSION['id']);
 
         return $_SESSION['id'];
     }

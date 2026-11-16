@@ -2,7 +2,7 @@
 
 namespace Modules\Sviat\Ukrposhta\Templates;
 
-use Design\TemplateTagInventory;
+use Modules\Sviat\Ukrposhta\Support\TemplateSmarty;
 use Okay\Modules\Sviat\Ukrposhta\Cart\ThemeClasses;
 use PHPUnit\Framework\TestCase;
 
@@ -11,9 +11,9 @@ class CartDeliveryTemplateTest extends TestCase
 {
     private static function render(array $vars): string
     {
-        require_once dirname(__DIR__, 4) . '/Design/TemplateTagInventory.php';
+        require_once __DIR__ . '/../Support/TemplateSmarty.php';
         $dir = dirname(__DIR__, 5) . '/Okay/Modules/Sviat/Ukrposhta/design/html';
-        $smarty = TemplateTagInventory::createSmarty([$dir], sys_get_temp_dir() . '/okaycms-ukrposhta-tpl-' . getmypid());
+        $smarty = TemplateSmarty::create([$dir], sys_get_temp_dir() . '/okaycms-ukrposhta-tpl-' . getmypid());
         $lang = [];
         include dirname($dir) . '/lang/ua.php';
         $smarty->assign('lang', (object)$lang);

@@ -133,7 +133,15 @@
         if (type.indexOf('application/json') === 0) {
             return 'json';
         }
-        return type.indexOf('application/pdf') === 0 ? 'pdf' : 'session';
+        return type.indexOf('application/pdf') === 0 || isPdfAttachment(response) ? 'pdf' : 'session';
+    }
+
+    /**
+     * Response стоку OkayCMS 4.5.3 перезаписує Content-Type ярлика на text/plain, тож файл упізнаємо й за
+     * Content-Disposition. Сторінка входу адмінки вкладенням не приходить.
+     */
+    function isPdfAttachment(response) {
+        return /^attachment;.*\.pdf"?$/i.test(response.headers.get('Content-Disposition') || '');
     }
 
     function answerIssue(root, kind, box) {
@@ -217,8 +225,8 @@
                 if (kind === 'json') {
                     return response.json().then(function (answer) { showIssues(root, answer.issues || []); });
                 }
-                return response.blob().then(function (pdf) {
-                    var url = URL.createObjectURL(pdf);
+                return response.arrayBuffer().then(function (bytes) {
+                    var url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
                     var link = el('a');
                     link.href = url;
                     link.download = fileName(response, root);

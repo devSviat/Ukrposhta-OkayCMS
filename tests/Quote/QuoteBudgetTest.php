@@ -76,4 +76,12 @@ class QuoteBudgetTest extends TestCase
         [$ok] = QuoteBudget::take($state, 1002, visitor: QuoteBudget::visitor('2001:db8:aa:2::1'));
         self::assertTrue($ok, 'інша /64 — інший відвідувач');
     }
+
+    /** IPv4, записана як IPv6, — та сама адреса IPv4, а не окрема /64. */
+    public function testIpv4MappedAddressIsTheIpv4Visitor(): void
+    {
+        self::assertSame(QuoteBudget::visitor('203.0.113.7'), QuoteBudget::visitor('::ffff:203.0.113.7'));
+        self::assertSame(QuoteBudget::visitor('2001:db8::1'), QuoteBudget::visitor('2001:db8::ffff'));
+        self::assertNotSame(QuoteBudget::visitor('2001:db8::1'), QuoteBudget::visitor('2001:db8:0:1::1'));
+    }
 }

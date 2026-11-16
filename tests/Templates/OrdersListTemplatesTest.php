@@ -2,7 +2,7 @@
 
 namespace Modules\Sviat\Ukrposhta\Templates;
 
-use Design\TemplateTagInventory;
+use Modules\Sviat\Ukrposhta\Support\TemplateSmarty;
 use Okay\Core\BackendTranslations;
 use Okay\Modules\Sviat\Ukrposhta\Shipments\ShipmentStatus;
 use PHPUnit\Framework\TestCase;
@@ -57,8 +57,8 @@ class OrdersListTemplatesTest extends TestCase
     private static function render(string $template, array $vars): string
     {
         $root = dirname(__DIR__, 5);
-        require_once $root . '/tests/Design/TemplateTagInventory.php';
-        $smarty = TemplateTagInventory::createSmarty(
+        require_once __DIR__ . '/../Support/TemplateSmarty.php';
+        $smarty = TemplateSmarty::create(
             [$root . '/Okay/Modules/Sviat/Ukrposhta/Backend/design/html', $root . '/backend/design/html'],
             sys_get_temp_dir() . '/okaycms-ukrposhta-list-tpl-' . getmypid(),
         );
