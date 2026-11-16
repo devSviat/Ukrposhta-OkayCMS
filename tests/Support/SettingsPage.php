@@ -2,7 +2,6 @@
 
 namespace Modules\Sviat\Ukrposhta\Support;
 
-use Design\TemplateTagInventory;
 use Okay\Core\BackendTranslations;
 use Okay\Modules\Sviat\Ukrposhta\Api\Credentials;
 use Okay\Modules\Sviat\Ukrposhta\Backend\DictionaryStatusView;
@@ -20,8 +19,8 @@ final class SettingsPage
     public static function render(array $vars = []): string
     {
         $root = dirname(__DIR__, 5);
-        require_once $root . '/tests/Design/TemplateTagInventory.php';
-        $smarty = TemplateTagInventory::createSmarty(
+        require_once __DIR__ . '/TemplateSmarty.php';
+        $smarty = TemplateSmarty::create(
             [$root . '/Okay/Modules/Sviat/Ukrposhta/Backend/design/html', $root . '/backend/design/html'],
             sys_get_temp_dir() . '/okaycms-ukrposhta-admin-tpl-' . getmypid(),
         );

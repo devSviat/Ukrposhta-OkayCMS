@@ -6,8 +6,9 @@ name: Release
 # після мерджу CI лише ставить тег на те, що вже у файлі. Тому CI нічого не
 # пише в захищену гілку.
 #
-# Модуль підтримує лише форк (devSviat/OkayCMS-Fork): стокова 4.5.3 має Smarty 4
-# і адмінку без токенів --ok-*, на яких стоїть сторінка модуля.
+# Модуль працює на двох рушіях: чистій OkayCMS 4.5.3 (Smarty 4) і форку
+# devSviat/OkayCMS-Fork (Smarty 5). Обидва звуть себе 4.5.3, тож кожна ціль
+# нижче описана явно — своїм репозиторієм, ref і версією PHP.
 
 on:
   # PR у main — лише перевірки. Мердж у main — перевірки й реліз, якщо версія
@@ -32,8 +33,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Модуль вимагає PHP 8.5+ — версії, на якій стоїть форк і на якій модуль
-        # перевіряють.
+        # Модуль вимагає PHP 8.5+ — версії, на якій стоять сток 4.5.3 і форк і
+        # на якій модуль перевіряють.
         php: ['8.5']
     steps:
       - uses: actions/checkout@v7
@@ -60,6 +61,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - target: stock
+            repo: OkayCMS/OkayCMS
+            ref: '4.5.3'
+            # composer.lock стоку 4.5.3 зібраний під PHP 8.5. Тести написані під
+            # PHP 8.5, як і форк.
+            php: '8.5'
           - target: fork
             repo: devSviat/OkayCMS-Fork
             ref: main
