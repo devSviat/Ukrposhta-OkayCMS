@@ -39,7 +39,6 @@
 .okay_list .up-list-status a.up-list-status__barcode:not(.btn):hover { color: var(--ok-accent, #135c94); }
 .okay_list .up-list-status a.up-list-status__barcode.is-copied:not(.btn) { color: var(--ok-ink, #1f2328); }
 .up-list-status .up-ship__badge { padding: 3px 6px; font-size: 10px; line-height: 1; white-space: nowrap; }
-.up-search-hint { margin-top: 4px; font-size: 12px; color: var(--ok-muted, #6c757d); }
 .up-mass { display: flex; flex-direction: column; gap: 6px; }
 .up-mass__head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .up-mass__title { font-weight: 600; }

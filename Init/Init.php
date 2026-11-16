@@ -2,6 +2,7 @@
 
 namespace Okay\Modules\Sviat\Ukrposhta\Init;
 
+use Okay\Modules\Sviat\Ukrposhta\Orders\DeliveryFilterHub;
 use Okay\Admin\Helpers\BackendDeliveriesHelper;
 use Okay\Admin\Helpers\BackendOrdersHelper;
 use Okay\Admin\Helpers\BackendPaymentsHelper;
@@ -101,8 +102,10 @@ class Init extends AbstractInit
         $this->addBackendBlock('order_contact', 'order_delivery.tpl');
         $this->addBackendBlock('order_custom_block', 'shipment_main.tpl');
         $this->registerChainExtension([BackendOrdersHelper::class, 'buildFilter'], [BackendExtender::class, 'listFilter']);
-        $this->registerChainExtension([BackendOrdersHelper::class, 'buildCountStatusesFilter'], [BackendExtender::class, 'countFilter']);
         $this->registerQueueExtension([BackendOrdersHelper::class, 'findOrders'], [BackendExtender::class, 'listOrders']);
+        foreach (DeliveryFilterHub::hooks(DeliveryFilterHub::HELPER) as [$expandable, $extension]) {
+            $this->registerChainExtension($expandable, $extension);
+        }
         $this->registerEntityFilter(OrdersEntity::class, 'up_without_shipment', OrdersEntityFilters::class, 'filter__up_without_shipment');
         $this->registerEntityFilter(OrdersEntity::class, 'up_status_groups', OrdersEntityFilters::class, 'filter__up_status_groups');
         $this->addBackendBlock('orders_list_name', 'orders_status.tpl');
