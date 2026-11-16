@@ -207,36 +207,53 @@
         return match ? match[1] : 'ukrposhta-' + root.getAttribute('data-order') + '.pdf';
     }
 
-    /** Ярлик приходить байтами PDF; помилка — JSON, і її показують, а не скачують. */
+    /**
+     * Ярлик приходить байтами PDF і відкривається в новій вкладці, щоб одразу надрукувати; помилка — JSON,
+     * і її показують на сторінці. Вкладку відкриваємо ще в обробнику кліку: після fetch браузер уже
+     * вважає window.open спливним вікном і блокує його. Якщо вкладку все ж заблоковано — файл скачується.
+     */
     function label(root, button) {
         if (button.disabled) {
             return;
         }
         clearIssues(root);
         busy(button, true);
+        var tab = window.open('', '_blank');
+        var closeTab = function () {
+            if (tab && !tab.closed) {
+                tab.close();
+            }
+        };
         var size = root.querySelector('[data-label="size"]');
         post(root, 'label', { size: size ? size.value : '' })
             .then(function (response) {
                 var kind = answerKind(response);
                 if (kind === 'session' || kind === 'server') {
+                    closeTab();
                     answerIssue(root, kind);
                     return;
                 }
                 if (kind === 'json') {
+                    closeTab();
                     return response.json().then(function (answer) { showIssues(root, answer.issues || []); });
                 }
                 return response.arrayBuffer().then(function (bytes) {
                     var url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
-                    var link = el('a');
-                    link.href = url;
-                    link.download = fileName(response, root);
-                    document.body.appendChild(link);
-                    link.click();
-                    link.remove();
-                    setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+                    if (tab && !tab.closed) {
+                        tab.location.href = url;
+                    } else {
+                        var link = el('a');
+                        link.href = url;
+                        link.download = fileName(response, root);
+                        document.body.appendChild(link);
+                        link.click();
+                        link.remove();
+                    }
+                    // Вкладка вантажить blob асинхронно: раннє звільнення лишило б її порожньою.
+                    setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
                 });
             })
-            .catch(function () { networkIssue(root); })
+            .catch(function () { closeTab(); networkIssue(root); })
             .finally(function () { busy(button, false); });
     }
 
