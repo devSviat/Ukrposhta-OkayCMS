@@ -134,8 +134,7 @@
             <div class="up-card__top">
                 {if $c.created}<span class="up-card__muted">{$btr->sviat__ukrposhta__ship_created_at|escape} {$c.created|escape}</span>{/if}
                 <div class="up-card__head">
-                    {* Власна монограма, не знак Укрпошти: офіційного SVG для вбудовування у відкритому доступі немає. *}
-                    <svg class="up-card__logo" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect width="16" height="16" rx="4" fill="#ffc400"/><path d="M4.4 4.2l3.1 5.2 2.9-5.2M7.5 9.4l-1.3 2.4" fill="none" stroke="#1d1d1b" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <svg class="up-card__logo" width="16" height="16" viewBox="54.75 53.25 404.5 404.5" aria-hidden="true"><path fill="#ffbe0c" d="M435 87C435 87 367.333 275.131 343.606 326.5C319.878 377.868 279.409 424 210.669 424C137.95 424 79 365.803 79 294.014C79 234.339 119.733 184.059 175.248 168.788L209.83 245.945C183.321 246.387 161.97 267.738 161.97 294.014C161.97 320.567 183.773 342.091 210.669 342.091C237.565 342.091 258.744 320.567 258.744 294.014C258.744 281.549 254.704 270.527 250.351 261.072C245.997 251.619 172.613 87 172.613 87H435Z"/></svg>
                     <button type="button" class="up-card__number fn_up_ship_copy" data-copy="{$c.barcode|escape}" data-copied="{$btr->sviat__ukrposhta__ship_copied|escape}" title="{$btr->sviat__ukrposhta__ship_copy|escape}">{$c.barcode|escape}</button>
                     {if $c.statusKey}<span class="up-ship__badge up-ship__badge--{$c.statusGroup|escape}">{$btr->getTranslation($c.statusKey)|escape}</span>{/if}
                 </div>
