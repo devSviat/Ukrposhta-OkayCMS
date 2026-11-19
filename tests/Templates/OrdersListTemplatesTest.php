@@ -18,7 +18,7 @@ class OrdersListTemplatesTest extends TestCase
         ]]]);
 
         self::assertStringContainsString('data-copy-string="0500000000017"', $html);
-        self::assertMatchesRegularExpression('~<svg class="up-list-status__logo" width="16" height="16"[^>]*aria-hidden="true">.*</svg>\s*<a [^>]*up-list-status__barcode~s', $html, 'monogram before the number');
+        self::assertMatchesRegularExpression('~<svg class="up-list-status__logo" width="14.79" height="14" viewBox="79 87 356 337" aria-hidden="true">.*</svg>\s*<a [^>]*up-list-status__barcode~s', $html, 'monogram before the number');
         self::assertStringNotContainsString('<img', $html, 'inline, no request');
         self::assertStringContainsString('up-ship__badge--arrived', $html);
         self::assertStringNotContainsString(self::XSS, $html);
@@ -72,5 +72,19 @@ class OrdersListTemplatesTest extends TestCase
         }
 
         return $smarty->fetch($template);
+    }
+
+    /** Номер копіюється так само, як у Нової Пошти: елемент ядра .fn_clipboard, підказка «Натисніть, щоб скопіювати», жовте «Скопійовано». */
+    public function testNumberCopiesLikeNovaPoshta(): void
+    {
+        $html = self::render('orders_status.tpl', ['order' => (object)['id' => 11, 'up_shipment' => ['barcode' => '0500000000017', 'group' => 'arrived', 'statusKey' => 'sviat__ukrposhta__status_arrived', 'eventName' => null]]]);
+        $root = dirname(__DIR__, 5) . '/Okay/Modules/Sviat/Ukrposhta/Backend';
+        $script = (string)file_get_contents($root . '/design/js/shipment.js');
+
+        self::assertMatchesRegularExpression('~<a href="" class="up-list-status__barcode fn_clipboard fn_up_copy hint-bottom-middle-t-info-s-small-mobile hint-anim" data-hint="Натисніть, щоб скопіювати" data-hint-copied="Скопійовано" data-copy-string="0500000000017"~u', $html);
+        self::assertStringContainsString("event.target.closest('.fn_up_copy')", $script);
+        self::assertStringNotContainsString('fn_up_ship_copy', $script);
+        self::assertStringNotContainsString('fn_up_list_copy', $script);
+        self::assertStringNotContainsString('sviat__ukrposhta__list_copy', (string)file_get_contents($root . '/lang/ua.php'));
     }
 }
