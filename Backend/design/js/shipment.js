@@ -260,28 +260,8 @@
             .finally(function () { busy(button, false); });
     }
 
-    function copy(button) {
-        var value = button.getAttribute('data-copy');
-        if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(value);
-        } else {
-            var field = document.createElement('input');
-            field.value = value;
-            field.setAttribute('readonly', '');
-            field.style.position = 'absolute';
-            field.style.opacity = '0';
-            document.body.appendChild(field);
-            field.select();
-            document.execCommand('copy');
-            document.body.removeChild(field);
-        }
-        button.classList.add('is-copied');
-        button.title = button.getAttribute('data-copied');
-        setTimeout(function () { button.classList.remove('is-copied'); }, 1000);
-    }
-
     document.addEventListener('click', function (event) {
-        var button = event.target.closest('.fn_up_ship_create, .fn_up_ship_attach, .fn_up_ship_attach_toggle, .fn_up_ship_lookup, .fn_up_ship_remove, .fn_up_ship_unlink, .fn_up_ship_refresh, .fn_up_ship_label, .fn_up_ship_copy');
+        var button = event.target.closest('.fn_up_ship_create, .fn_up_ship_attach, .fn_up_ship_attach_toggle, .fn_up_ship_lookup, .fn_up_ship_remove, .fn_up_ship_unlink, .fn_up_ship_refresh, .fn_up_ship_label');
         var root = button ? rootOf(button) : null;
         if (!root) {
             return;
@@ -306,8 +286,6 @@
             send(root, button, 'refresh', {});
         } else if (has('fn_up_ship_label')) {
             label(root, button);
-        } else if (has('fn_up_ship_copy')) {
-            copy(button);
         } else if (has('fn_up_ship_remove')) {
             if (window.confirm(root.getAttribute('data-confirm-remove'))) {
                 send(root, button, 'remove', {});
@@ -342,10 +320,10 @@
             part.hidden = !input.checked;
         }
     });
-    // Ядро прив'язує .fn_clipboard ще в <head>, до появи рядків списку замовлень; без власного обробника
-    // клік по href="" перезавантажує сторінку.
+    // Ядро прив'язує .fn_clipboard ще в <head>, до появи рядків списку замовлень і картки; без власного обробника
+    // клік по href="" перезавантажує сторінку. Один обробник на список і картку: копіюють однаково.
     document.addEventListener('click', function (event) {
-        var link = event.target.closest('.fn_up_list_copy');
+        var link = event.target.closest('.fn_up_copy');
         if (!link) {
             return;
         }

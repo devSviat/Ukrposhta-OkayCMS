@@ -216,7 +216,7 @@ class ShipmentViewTest extends TestCase
         $html = self::render('shipment_main.tpl', self::build(self::tracked()));
 
         self::assertStringNotContainsString('track.ukrposhta', $html);
-        self::assertStringContainsString('data-copy="0500012345678"', $html);
+        self::assertStringContainsString('data-copy-string="0500012345678"', $html);
     }
 
     public function testFormWithoutShipmentAndCodOnlyForCodPayment(): void
@@ -332,5 +332,11 @@ class ShipmentViewTest extends TestCase
         $smarty->assign('up_shipment', $view);
 
         return $smarty->fetch($template);
+    }
+
+    /** Номер копіюється так само, як у Нової Пошти: елемент ядра .fn_clipboard, підказка «Натисніть, щоб скопіювати», жовте «Скопійовано». */
+    public function testNumberCopiesLikeNovaPoshta(): void
+    {
+        self::assertMatchesRegularExpression('~<a href="" class="up-card__number fn_clipboard fn_up_copy hint-bottom-middle-t-info-s-small-mobile hint-anim" data-hint="Натисніть, щоб скопіювати" data-hint-copied="Скопійовано" data-copy-string="0500012345678"~u', self::render('shipment_main.tpl', self::build(self::row())));
     }
 }
